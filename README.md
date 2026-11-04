@@ -18,6 +18,16 @@ cargo build --release            # binary: target/release/journeyspec
 Rust stable (edition 2024). No runtime outside the binary's own
 dependencies.
 
+Or fetch a released binary through npm:
+
+```sh
+npm install "@<scope>/journeyspec"    # <scope> is the scope the release announces
+npx "@<scope>/journeyspec" verify     # or run it without installing
+```
+
+See [npm/README.md](npm/README.md) for how the npm package fetches and
+verifies the binary.
+
 ## Quick start
 
 Put a `journeyspec.toml` at your repo root declaring the surface:
