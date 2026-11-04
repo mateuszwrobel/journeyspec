@@ -1,0 +1,86 @@
+# journeyspec architecture spec — verified by `archspec verify --strict` in
+# journeyspec/public/journeyspec/run-unit-tests.sh.
+#
+# Shape of the real tree (from `archspec scan`: a library unit and a binary
+# unit, 18 inter-module edges outside test modules, acyclic). The scan shows
+# no mutual module edge, so the four boundaries below run strictly top-down.
+#
+#   cli        -> commands, evidence, foundation   argument parsing, dispatch,
+#                the binary entrypoint, the built-in manual
+#   commands -> evidence, foundation               the verdict engine, the
+#                deterministic renderer, the spine draftr
+#   evidence -> (nothing)                          committed artifacts: door
+#                census + edge census, spines, the ratchet store
+#   foundation -> (nothing)                        profile discovery, exit codes
+
+[project]
+language = "rust"
+
+# cli — argument parsing, dispatch and the binary entrypoint. The binary unit
+# (`journeyspec-bin`) links the library as a unit-tier edge with no module
+# endpoints, so the unit claim here owns that edge's source. The built-in
+# manual (`help`) is pure output with one edge into `exit`, so it shares this
+# boundary — the binary's use of it is internal to `cli`.
+[[module]]
+name = "cli"
+matches = { units = ["journeyspec-bin"], modules = ["journeyspec::cli", "journeyspec::help"] }
+
+[module.allowed]
+depend_on = ["commands", "evidence", "foundation"]
+
+# commands — the machinery that turns evidence into verdicts: the gate set
+# with the ratchet, the deterministic doc renderer, the spine draftr.
+[[module]]
+name = "commands"
+matches = { modules = [
+  "journeyspec::verdict",
+  "journeyspec::render",
+  "journeyspec::scaffold",
+] }
+
+[module.allowed]
+depend_on = ["evidence", "foundation"]
+
+# evidence — the committed artifacts read only: the door census and the
+# schema-edge census (census), the journey spines (spine), the ratchet store
+# (baseline). None of them imports anything from this crate.
+[[module]]
+name = "evidence"
+matches = { modules = [
+  "journeyspec::census",
+  "journeyspec::spine",
+  "journeyspec::baseline",
+] }
+
+[module.allowed]
+depend_on = []
+
+# foundation — the shared vocabulary: the project profile and its discovery,
+# the exit taxonomy. The library facade unit (`journeyspec`) is claimed here
+# by the unit fallback. Nothing below depends upward.
+[[module]]
+name = "foundation"
+matches = { units = ["journeyspec"], modules = [
+  "journeyspec::config",
+  "journeyspec::exit",
+] }
+
+[module.allowed]
+depend_on = []
+
+# --- Cycles ---
+# Acyclic at every level: the scan shows no mutual module edge, so cli ->
+# commands -> evidence/foundation is the only direction edges move in.
+[[constraint]]
+type = "no_cycles"
+modules = ["cli", "commands", "evidence", "foundation"]
+severity = "error"
+
+# --- Public API ---
+# The library crate root re-exports exactly the ten modules. Exit codes are
+# reached through `exit`, the profile through `config`; nothing else is
+# public at the crate root.
+[[constraint]]
+type = "public_api_allowlist"
+allowed = ["baseline", "census", "cli", "config", "exit", "help", "render", "scaffold", "spine", "verdict"]
+severity = "error"

@@ -1,0 +1,37 @@
+[workspace]
+resolver = "2"
+
+[package]
+name = "journeyspec"
+version = "0.3.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "Journey spine verdict CLI: verify, check, status, generate, scaffold over journey spines and a committed door census."
+
+# Standalone crate with its own workspace, exactly as the family siblings are
+# standalone: its dependency tree must never enter another crate's lock, and
+# it shares no code with them. The family unifies through the conformance
+# suite contract only (the family doctrine).
+[workspace.package]
+version = "0.3.0"
+edition = "2024"
+rust-version = "1.99"
+license = "Apache-2.0"
+publish = false
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_yaml = "0.9"
+toml = "0.8"
+
+[dev-dependencies]
+tempfile = "3.27"
+
+[lints.rust]
+unused_imports = "deny"
+
+[lints.clippy]
+all = "deny"
